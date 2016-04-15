@@ -471,13 +471,11 @@ contains
     return
   end subroutine matd_get_procgrid_range_
 
-
-  !
-  ! 指定されたプロセッサグリッド内の指定されたランクが担当するブロックの
-  ! ブロック番号を求めるサブルーチン
-  ! ブロックが存在しない場合は-1を返すこととする
-  !
   subroutine matd_get_block_number_of_rank_in_procgrid_(self, pg, r, block_number)
+!!
+!!  Subroutine to return the block number of the specified rank in a
+!!  specified process grid.
+!!
     type(matd_matrix), intent(in) :: self
     integer, intent(in) :: pg, r
     integer, intent(out) :: block_number
@@ -495,12 +493,11 @@ contains
     return
   end subroutine matd_get_block_number_of_rank_in_procgrid_
 
-
-  !
-  ! プロセッサグリッド付きイレギュラーブロックサイクリック分散行列
-  ! の情報を出力するサブルーチン
-  !
   subroutine matd_print_info_irreg_scalapack_(self)
+!!
+!!  Subroutine to print out the information of irregular block cyclic distribution
+!!  with process grid
+!!
     type(matd_matrix), intent(in) :: self
     integer :: i
 
@@ -531,11 +528,11 @@ contains
   end subroutine matd_print_info_irreg_scalapack_
 
 
-  !
-  ! プロセッサグリッド付きイレギュラーブロックサイクリック分散行列
-  ! を生成するサブルーチン
-  !
   subroutine matd_create_irreg_scalapack_(self, dim1, dim2, map1, map2, procgrid1, procgrid2, comm)
+!!
+!!  Subroutine to generate the irregular block cyclic distribution
+!!  with a process grid
+!!
     type(matd_matrix), intent(out) :: self
     integer, intent(in) :: dim1, dim2, map1(:), map2(:), procgrid1, procgrid2, comm
     integer :: ierr, nelems, blow1, bhigh1, blow2, bhigh2, block_index1_disp, block_index2_disp, &
