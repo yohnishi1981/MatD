@@ -201,7 +201,7 @@
 contains
 
   !
-  ! 自担当ブロック分の領域を確保し、RMA用のウィンドウを生成するサブルーチン
+  ! Allocate the memory for my block and make the window for RMA. 
   !
   subroutine matd_create_window_(self, nelems, comm)
     use iso_c_binding
