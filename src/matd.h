@@ -200,10 +200,10 @@
 
 contains
 
-  !
-  ! Allocate the memory for my block and make the window for RMA. 
-  !
   subroutine matd_create_window_(self, nelems, comm)
+!!
+!! Subroutine to allocate memory for my block and make the window for RMA. 
+!!
     use iso_c_binding
     type(matd_matrix), intent(out) :: self
     integer, intent(in) :: nelems, comm
@@ -214,23 +214,23 @@ contains
     call mpi_type_size(MATD_MPI_TYPE, sizeoftype, ierr)
     bytesize = sizeoftype * nelems
 
-    ! c_ptrに対してmpi_alloc_memが動かなかったりもするので
-    ! とりあえず普通にallocateすることにする。
-    ! mpi_alloc_memを使う場合はmatd_destroy_も変更する。
-    ! call mpi_alloc_mem(bytesize, mpi_info_null, baseptr, ierr)
-    ! call c_f_pointer(baseptr, self%storage, [nelems])
+!! mpi_alloc_mem for c_ptr does not work in some cases.
+!! So, allocate is employed.
+!! When you use mpi_alloc_mem, you have to change matd_destroy_
+!    call mpi_alloc_mem(bytesize, mpi_info_null, baseptr, ierr)
+!    call c_f_pointer(baseptr, self%storage, [nelems])
 
     allocate(self%storage(nelems))
     call mpi_win_create(self%storage(1), bytesize, sizeoftype, &
-      mpi_info_null, comm, self%win, ierr)
+                        mpi_info_null, comm, self%win, ierr)
     return
   end subroutine matd_create_window_
 
 
-  !
-  ! 行列のブロックに関するインデックスを求めるサブルーチン
-  !
   subroutine matd_get_block_index_(self, b, block_index1, block_index2)
+!!
+!!  Subroutine to get indices of the block of a matrix.
+!!
     type(matd_matrix), intent(in) :: self
     integer, intent(in) :: b
     integer, intent(out) :: block_index1, block_index2
@@ -241,11 +241,10 @@ contains
   end subroutine matd_get_block_index_
 
 
-  !
-  ! 要素のインデックスからその要素が属するブロックのブロックに関するインデックスを
-  ! 求めるサブルーチン
-  !
   subroutine matd_get_block_index_by_index_(self, index1, index2, block_index1, block_index2)
+!!
+!!  Subroutine to get the indices of the block from the indices of an element.
+!!
     type(matd_matrix), intent(in) :: self
     integer, intent(in) :: index1, index2
     integer, intent(out) :: block_index1, block_index2
@@ -275,11 +274,10 @@ contains
     return
   end subroutine matd_get_block_index_by_index_
 
-
-  !
-  ! 要素のインデックスからその要素が属するブロックのブロック番号を求めるサブルーチン
-  !
   subroutine matd_get_block_number_by_index_(self, index1, index2, block_number)
+!!
+!!  Subroutine to get the block number from the indices of an element.
+!!
     type(matd_matrix), intent(in) :: self
     integer, intent(in) :: index1, index2
     integer, intent(out) :: block_number
@@ -291,10 +289,10 @@ contains
   end subroutine matd_get_block_number_by_index_
 
 
-  !
-  ! 行列のブロックに関するインデックスからブロック番号を求めるサブルーチン
-  !
   subroutine matd_get_block_number_by_block_index_(self, block_index1, block_index2, block_number)
+!!
+!!  Subroutine to get the block number from the indices of a matrix
+!!
     type(matd_matrix), intent(in) :: self
     integer, intent(in) :: block_index1, block_index2
     integer, intent(out) :: block_number
@@ -303,11 +301,10 @@ contains
     return
   end subroutine matd_get_block_number_by_block_index_
 
-
-  !
-  ! ブロックの範囲を求めインデックスで返すサブルーチン
-  !
   subroutine matd_get_block_range_(self, b, low1, high1, low2, high2)
+!!
+!!  Subroutine to return the index by calculating the range of a block.
+!!
     type(matd_matrix), intent(in) :: self
     integer, intent(in) :: b
     integer, intent(out) :: low1, high1, low2, high2
@@ -332,11 +329,10 @@ contains
     return
   end subroutine matd_get_block_range_
 
-
-  !
-  ! ブロック内の要素の数を求めるサブルーチン
-  !
   subroutine matd_get_block_size_(self, b, block_size)
+!!
+!!  Subroutine to get the number of element in a block
+!!
     type(matd_matrix), intent(in) :: self
     integer, intent(in) :: b
     integer, intent(out) :: block_size
@@ -347,11 +343,10 @@ contains
     return
   end subroutine matd_get_block_size_
 
-
-  !
-  ! イレギュラーブロックサイクリック分散行列の情報を出力するサブルーチン
-  !
   subroutine matd_print_info_irreg_blockcyclic_(self)
+!!
+!!  Subroutine to print the information of irregular block cyclic distribution
+!!
     type(matd_matrix), intent(in) :: self
     integer :: i
 
@@ -378,11 +373,10 @@ contains
     return
   end subroutine matd_print_info_irreg_blockcyclic_
 
-
-  !
-  ! ウィンドウに関連するコミュニケータの同期をとるサブルーチン
-  !
   subroutine matd_fence_(self)
+!!
+!!  Subroutine to fence 
+!!
     type(matd_matrix), intent(in) :: self
     integer :: ierr
 
@@ -390,11 +384,10 @@ contains
     return
   end subroutine matd_fence_
 
-
-  !
-  ! イレギュラーブロックサイクリック分散行列を生成するサブルーチン
-  !
   subroutine matd_create_irreg_blockcyclic_(self, dim1, dim2, map1, map2, comm)
+!!
+!!  Subroutine to generate the irregular cyclic block distribution.
+!!
     type(matd_matrix), intent(out) :: self
     integer, intent(in) :: dim1, dim2, map1(:), map2(:), comm
     integer :: ierr, itr_b, nelems, block_size
@@ -421,11 +414,10 @@ contains
     return
   end subroutine matd_create_irreg_blockcyclic_
 
-
-  !
-  ! プロセッサグリッド内でのランクに対応するブロックのブロックに関するインデックスを求める
-  !
   subroutine matd_get_block_index_of_rank_in_procgrid_(self, r, block_index1, block_index2)
+!!
+!!  Subroutine to calculate the indices of the block related to the rank in a process grid.
+!!
     type(matd_matrix), intent(in) :: self
     integer, intent(in) :: r
     integer, intent(out) :: block_index1, block_index2
@@ -435,19 +427,19 @@ contains
     return
   end subroutine matd_get_block_index_of_rank_in_procgrid_
 
-
-  !
-  ! メモリ解放、ウィンドウ削除を行い行列をクリアするサブルーチン
-  !
   subroutine matd_destroy_(self)
+!!
+!!  Subroutine to deallocate the memory and destroy the window
+!!
     type(matd_matrix), intent(out) :: self
     integer :: ierr
 
     call mpi_win_free(self%win, ierr)
     deallocate(self%map1, self%map2)
 
-    ! mpi_alloc_memを使った場合はこれ
-    ! call mpi_free_mem(self%storage, ierr)
+!!  When you used mpi_alloc_mem, activate the following line and
+!!  comment out "deallocate"
+!    call mpi_free_mem(self%storage, ierr)
     deallocate(self%storage)
 
     return
