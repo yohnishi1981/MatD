@@ -10,7 +10,7 @@ matd.o : matd.f90
 
 # Preprocess
 matd.f90 : matd_.f90 matd.h
-	cpp matd_.f90 -P -o $@
+	$(FC) matd_.f90 -P -o $@
 
 install : libmatd.a
 	cp libmatd.a $(MATD_LIB); \

@@ -16,3 +16,14 @@ matd:
 # Compile examples that use Matd library.
 ex:
 	$(MAKE) -C examples
+
+.PHONY: cleanlib
+cleanlib:
+	rm -f $(MATD_LIB)/* $(MATD_INCLUDE)/*
+
+.PHONY: cleanex
+cleanex:
+	rm -f ./examples/bin/*
+
+.PHONY: veryclean
+veryclean: cleanlib cleanex
