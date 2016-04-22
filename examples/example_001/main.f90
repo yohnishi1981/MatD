@@ -1,44 +1,51 @@
-! ブロックサイズが5x4の10x11のブロック分散行列
-! を生成し、1から110までの数値を順番代入し、
-! 各プロセスが保持している要素を出力して確認
-! するプログラム
+!!  1. Create 10x11 block distribution matrix, whose block size is 5x4.
+!!  2. Insert the number into it from 1 to 110.
+!!  3. Print out the data in each rank.
+!!  * NProcs must be 6.
 program main
   use mpi
   use matd
   implicit none
 
   type(matd_int_matrix) :: m
-  integer :: ierr, i, myrank
-  integer :: buf(110)
+  integer,parameter :: nelm = 10*11
+  integer(4) :: ierr, myrank, nprocs
+  integer :: i
+  integer :: buf(nelm)
   integer, pointer :: ptr(:)
 
   call mpi_init(ierr)
   call mpi_comm_rank(mpi_comm_world, myrank, ierr)
+  call mpi_comm_size(mpi_comm_world, nprocs, ierr)
+  if (nprocs /= 6) then
+    if (myrank == 0) write(6,'(a)') " NProcs must be 6 in this program. Program stop."
+    call mpi_finalize(ierr)
+    stop
+  endif
 
-  ! 5x4のブロックの10x11の行列を生成
-  ! 2x3=6プロセスで実行する必要がある
+!!  1. Create 10x11 block distribution matrix, whose block size is 5x4.
+!!  * NProcs must be 6.
   call matd_create_reg(m, 10, 11, 5, 4, mpi_comm_world)
 
-  ! フェンスを置く
+!!  Fence required
   call matd_fence(m)
 
-
-
-  ! 分散行列へ代入するデータをランク0で生成し、
-  ! Put処理で行列全体へ代入する
+!!  Generate data to put distributed matrix only on rank 0.
+  buf(1:nelm) = 0
   if (myrank == 0) then
-    do i = 1, 110
+    do i = 1, nelm
       buf(i) = i
     enddo
-    ! 列方向で1-10、行方向で1-11の範囲に代入
+!!  The size of distributed matrix is 10x11.
     call matd_put(m, 1, 10, 1, 11, buf)
   endif
+!!  Mapping the data in m to ptr.
   call matd_data(m, ptr)
 
-  ! フェンスを置いてput操作の待ち合わせ
+!!  Fence required to wait for put operation.
   call matd_fence(m)
 
-  ! 各プロセスが保持している要素を出力
+!!  Print out the elements on each rank.
   do i = 0, 5
     if (myrank == i) then
       print *, "== Rank ", i
@@ -47,7 +54,7 @@ program main
     call matd_fence(m)
   enddo
 
-  ! 行列の破壊処理
+!!  Destroy the matrix
   call matd_destroy(m)
 
   call mpi_finalize(ierr)

@@ -1,6 +1,6 @@
 FC=mpif90
 
-all: libmatd.a install clean
+all: libmatd.a install 
 
 libmatd.a : matd.o
 	ar crv $@ matd.o
