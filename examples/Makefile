@@ -1,3 +1,4 @@
+include ../Makefile.config
 SUBDIRS = example*
 BINDIR = $(shell pwd)/bin
 

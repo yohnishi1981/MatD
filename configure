@@ -1,0 +1,26 @@
+#!/bin/sh
+
+if [ `uname` = 'Darwin' ]; then
+  f77="mpif90"
+  cdir=`pwd`
+  fflags="-O2"
+  libs=" "
+fi
+
+cat <<EOF > Makefile.config
+########################
+#                      #
+# MatD Makefile.config #
+#                      #
+########################
+FC = $f77
+FFLAGS = $fflags
+LIBS = $libs
+
+MATD_DIR = $cdir
+MATD_LIB = \$(MATD_DIR)/lib
+MATD_INCLUDE = \$(MATD_DIR)/include
+CFLAGS=
+
+EOF
+

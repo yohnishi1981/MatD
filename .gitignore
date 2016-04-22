@@ -5,3 +5,4 @@ src/*.mod
 src/*.a
 src/*.o
 src/matd.f90
+make.log

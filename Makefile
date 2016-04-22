@@ -1,13 +1,6 @@
+include ./Makefile.config
+
 all: matd ex
-
-# The Compiler used in project.
-export FC=mpif90
-
-# The directory of Matd library files and include files.
-export MATD_DIR := $(shell pwd)
-export MATD_LIB = $(MATD_DIR)/lib
-export MATD_INCLUDE = $(MATD_DIR)/include
-export CFLAGS=
 
 # Compile Matd library.
 matd:
@@ -16,6 +9,10 @@ matd:
 # Compile examples that use Matd library.
 ex:
 	$(MAKE) -C examples
+
+.PHONY: cleansrc
+cleansrc:
+	rm -f ./src/*.mod ./src/*.a ./src/*.o
 
 .PHONY: cleanlib
 cleanlib:
@@ -26,4 +23,4 @@ cleanex:
 	rm -f ./examples/bin/*
 
 .PHONY: veryclean
-veryclean: cleanlib cleanex
+veryclean: cleansrc cleanlib cleanex

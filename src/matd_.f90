@@ -10,11 +10,12 @@ end module matd_common_module
 
 
 module matd_matrix_int_module
+!!  4-byte integer
   use mpi
   use matd_common_module
   implicit none
 #define MATD_ELEMTYPE integer
-#define MATD_MPI_TYPE MPI_INT
+#define MATD_MPI_TYPE MPI_INTEGER4
 #include "matd.h"
 #undef MATD_ELEMTYPE
 #undef MATD_MPI_TYPE
@@ -22,11 +23,12 @@ end module matd_matrix_int_module
 
 
 module matd_matrix_int8_module
+!!  8-byte integer
   use mpi
   use matd_common_module
   implicit none
 #define MATD_ELEMTYPE integer(8)
-#define MATD_MPI_TYPE MPI_LONG_LONG_INT
+#define MATD_MPI_TYPE MPI_INTEGER8
 #include "matd.h"
 #undef MATD_ELEMTYPE
 #undef MATD_MPI_TYPE
