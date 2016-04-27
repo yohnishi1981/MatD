@@ -1,14 +1,42 @@
 #!/bin/sh
 
+if [ `uname` = 'Linux' ]; then
+    ECHO='echo -e'
+    prc=`uname -m`
+else
+    ECHO=echo
+fi
+
+
+$ECHO ' 64-bit integer or 32-bit integer? [64/32] \c'
+read answer
+if [ "$answer" = "64" ]; then
+  int=int8
+else
+  int=int4
+fi
+
 if [ `uname` = 'Darwin' ]; then
   f77="mpif90"
   cdir=`pwd`
-  fflags="-O2"
+  if [ $int == "int8" ]; then
+    fflags="-O2 -i8"
+    dpp="-DINT8"
+  else
+    fflags="-O2 -i4"
+    dpp="-DINT4"
+  fi
   libs=" "
 elif [ `uname` = 'Linux' ]; then
   f77="mpiifort"
   cdir=`pwd`
-  fflags="-O2"
+  if [ $int == "int8" ]; then
+    fflags="-O2 -i8"
+    dpp="-DINT8"
+  else
+    fflags="-O2 -i4"
+    dpp="-DINT4"
+  fi
   libs="-mkl"
 fi
 
@@ -25,7 +53,7 @@ LIBS = $libs
 MATD_DIR = $cdir
 MATD_LIB = \$(MATD_DIR)/lib
 MATD_INCLUDE = \$(MATD_DIR)/include
-CFLAGS=
-
+CFLAGS =
+DPPFLAGS = $dpp
 EOF
 

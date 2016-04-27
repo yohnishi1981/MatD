@@ -1,10 +1,10 @@
 ! example_001の分散方法の行列から
 ! example_005の分散方法の行列へ要素をコピーする例
 program main
-  use mpi
+!  use mpi
   use matd
   implicit none
-
+  include 'mpif.h'
   type(matd_int_matrix) :: m1, m2
   integer :: ierr, i, myrank
   integer :: buf(110)

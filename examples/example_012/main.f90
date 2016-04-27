@@ -1,8 +1,8 @@
 program main
-  use mpi
+!  use mpi
   use matd
   implicit none
-
+  include 'mpif.h'
   type(matd_int_matrix) :: m
 
   integer, parameter :: block_size1 = 2, block_size2 = 2

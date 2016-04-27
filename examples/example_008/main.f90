@@ -1,8 +1,8 @@
 program main
-  use mpi
+!  use mpi
   use matd
   implicit none
-
+  include 'mpif.h'
   type(matd_int_matrix) :: m1, m2
   integer :: ierr, i, myrank, j, nblocks_owned
   integer :: map1(1) = (/1/)

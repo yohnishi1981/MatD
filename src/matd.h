@@ -3,8 +3,8 @@
   public :: matd_matrix
   type matd_matrix
     private
-    integer :: nprocs
-    integer :: myrank
+    integer(4) :: nprocs
+    integer(4) :: myrank
     integer :: win
     integer :: dim1
     integer :: dim2
@@ -410,22 +410,23 @@ contains
       nelems = nelems + block_size
       itr_b = itr_b + self%nprocs
     enddo
+    
     call matd_create_window_(self, nelems, comm)
     return
   end subroutine matd_create_irreg_blockcyclic_
 
-  subroutine matd_get_block_index_of_rank_in_procgrid_(self, r, block_index1, block_index2)
+  SUBROUTINE MatD_Get_block_index_of_rank_in_procgrid_(Self,Rank,Block_index1,Block_index2)
 !!
 !!  Subroutine to calculate the indices of the block related to the rank in a process grid.
 !!
-    type(matd_matrix), intent(in) :: self
-    integer, intent(in) :: r
-    integer, intent(out) :: block_index1, block_index2
+    TYPE(MatD_Matrix),INTENT(IN) :: Self
+    INTEGER(4),INTENT(IN) :: Rank
+    INTEGER,INTENT(OUT) :: Block_index1, Block_index2
 
-    block_index1 = mod(r, self%procgrid1) + 1
-    block_index2 = r / self%procgrid1 + 1
-    return
-  end subroutine matd_get_block_index_of_rank_in_procgrid_
+    Block_index1 = MOD(Rank,Self%ProcGrid1) + 1
+    Block_index2 = Rank / Self%Procgrid1 + 1
+    RETURN
+  END SUBROUTINE MatD_Get_block_index_of_rank_in_procgrid_
 
   subroutine matd_destroy_(self)
 !!
@@ -477,7 +478,8 @@ contains
 !!  specified process grid.
 !!
     type(matd_matrix), intent(in) :: self
-    integer, intent(in) :: pg, r
+    integer, intent(in) :: pg
+    INTEGER,INTENT(IN) :: r
     integer, intent(out) :: block_number
     integer :: block_index1_disp, block_index2_disp, blow1, bhigh1, blow2, bhigh2
 
@@ -528,18 +530,21 @@ contains
   end subroutine matd_print_info_irreg_scalapack_
 
 
-  subroutine matd_create_irreg_scalapack_(self, dim1, dim2, map1, map2, procgrid1, procgrid2, comm)
+  SUBROUTINE MatD_Create_irreg_scalapack_(Self,Dim1,Dim2,Map1,Map2,ProcGrid1,ProcGrid2,COMM)
 !!
 !!  Subroutine to generate the irregular block cyclic distribution
 !!  with a process grid
 !!
-    type(matd_matrix), intent(out) :: self
-    integer, intent(in) :: dim1, dim2, map1(:), map2(:), procgrid1, procgrid2, comm
-    integer :: ierr, nelems, blow1, bhigh1, blow2, bhigh2, block_index1_disp, block_index2_disp, &
-      block_number, block_size, itr_pg
+    TYPE(MatD_Matrix),INTENT(OUT) :: Self
+    INTEGER,INTENT(IN) :: Dim1,Dim2,Map1(:),Map2(:),ProcGrid1,ProcGrid2,COMM
+    INTEGER(4) :: IErr
+    INTEGER :: MyRank
+    INTEGER :: NElems,BLow1,BHigh1,BLow2,BHigh2
+    INTEGER :: Block_index1_disp,Block_index2_disp,Block_number,Block_size,Itr_pg
 
-    call mpi_comm_size(comm, self%nprocs, ierr)
-    call mpi_comm_rank(comm, self%myrank, ierr)
+    CALL MPI_Comm_size(COMM,Self%NProcs,IErr)
+    CALL MPI_Comm_rank(COMM,Self%MyRank,IErr)
+    MyRank = Self%MyRank
     self%dim1 = dim1
     self%dim2 = dim2
     self%nblocks1 = size(map1)
@@ -566,7 +571,7 @@ contains
 
     nelems = 0
     do itr_pg = 0, self%nprocgrids - 1
-      call matd_get_block_number_of_rank_in_procgrid_(self, itr_pg, self%myrank, block_number)
+      call matd_get_block_number_of_rank_in_procgrid_(self, itr_pg, MyRank, block_number)
       if (block_number >= 0) then
         call matd_get_block_size_(self, block_number, block_size)
         nelems = nelems + block_size
@@ -805,17 +810,17 @@ contains
   end subroutine matd_get_irreg_scalapack_
 
 
-  !
-  ! ブロック(サイクリック)分散行列を生成するサブルーチン
-  !
   subroutine matd_create_reg_(self, dim1, dim2, block_size1, block_size2, comm, is_blockcyclic)
+!!
+!!  Subroutine to generate a matrix of block (cyclic) distibution.
+!!
     type(matd_matrix), intent(out) :: self
     integer, intent(in) :: dim1, dim2, block_size1, block_size2, comm
     logical, intent(in), optional :: is_blockcyclic
     integer, allocatable :: map1(:), map2(:)
-    integer :: nblocks1, nblocks2, itr, nprocs, ierr
+    integer(4) :: NProcs
+    integer :: nblocks1, nblocks2, itr, ierr
     logical :: is_bc
-
     if (mod(dim1, block_size1) == 0) then
       nblocks1 = dim1 / block_size1
     else
@@ -848,7 +853,6 @@ contains
     do itr = 1, nblocks2
       map2(itr) = (itr - 1) * block_size2 + 1
     enddo
-
     call matd_create_irreg_blockcyclic_(self, dim1, dim2, map1, map2, comm)
     deallocate(map1, map2)
     return
@@ -920,13 +924,14 @@ contains
   end subroutine matd_create_scalapack_
 
 
-  !
-  ! 任意の分散行列へPut操作を行うサブルーチン
-  !
-  subroutine matd_put_(self, low1, high1, low2, high2, buf)
-    type(matd_matrix), intent(out) :: self
-    integer, intent(in) :: low1, high1, low2, high2
-    MATD_ELEMTYPE, intent(inout) :: buf(:)
+  SUBROUTINE Matd_Put_(Self,Low1,High1,Low2,High2,Buf)
+!!
+!!  Subroutine to put the data onto a distributed matrix.
+!!  The distribution type is arbitrary.
+!!
+    TYPE(MatD_Matrix),INTENT(OUT) :: Self
+    INTEGER,INTENT(IN) :: Low1,High1,Low2,High2
+    MATD_ELEMTYPE,INTENT(INOUT) :: Buf(:)
 
     if (self%is_scalapack) then
       call matd_put_irreg_scalapack_(self, low1, high1, low2, high2, buf)
@@ -1404,14 +1409,17 @@ contains
     double precision, target, intent(in) :: mem_pool(:)
     integer, intent(in) :: ibegin
     integer, intent(out) :: iend
-    integer :: ierr, nelems, blow1, bhigh1, blow2, bhigh2, block_index1_disp, block_index2_disp, &
-      block_number, block_size, itr_pg
+    INTEGER(4) :: IErr
+    INTEGER :: NElems,BLow1,BHigh1,BLow2,BHigh2
+    INTEGER :: Block_index1_disp,Block_index2_disp,Block_number,Block_size,Itr_pg
+    INTEGER :: MyRank
     type(c_ptr) :: cptr
     integer :: pool_index, sizeoftype
     integer(kind=mpi_address_kind) :: bytesize
 
-    call mpi_comm_size(comm, self%nprocs, ierr)
-    call mpi_comm_rank(comm, self%myrank, ierr)
+    CALL MPI_Comm_size(COMM,Self%NProcs,IErr)
+    CALL MPI_Comm_rank(COMM,Self%MyRank,IErr)
+    MyRank = Self%MyRank
     self%dim1 = dim1
     self%dim2 = dim2
     self%nblocks1 = size(map1)
@@ -1438,7 +1446,7 @@ contains
 
     nelems = 0
     do itr_pg = 0, self%nprocgrids - 1
-      call matd_get_block_number_of_rank_in_procgrid_(self, itr_pg, self%myrank, block_number)
+      CALL MatD_Get_block_number_of_rank_in_procgrid_(Self,Itr_pg,MyRank,Block_number)
       if (block_number >= 0) then
         call matd_get_block_size_(self, block_number, block_size)
         nelems = nelems + block_size

@@ -3,10 +3,10 @@
 ! 1から110までの数値を順番代入し、各プロセスが
 ! 保持している要素を出力して確認するプログラム
 program main
-  use mpi
+!  use mpi
   use matd
   implicit none
-
+  include 'mpif.h'
   type(matd_int_matrix) :: m
   integer :: ierr, i, myrank
   integer :: buf(110)

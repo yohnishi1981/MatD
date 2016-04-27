@@ -1,8 +1,8 @@
 program main
-  use mpi
+!  use mpi
   use matd
   implicit none
-
+  include 'mpif.h'
   type(matd_int_matrix) :: m
 
   integer :: map1(5) = (/1,3,6,7,10/)

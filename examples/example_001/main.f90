@@ -2,60 +2,63 @@
 !!  2. Insert the number into it from 1 to 110.
 !!  3. Print out the data in each rank.
 !!  * NProcs must be 6.
-program main
-  use mpi
-  use matd
-  implicit none
+PROGRAM MAIN
+!  use mpi
+  USE MatD
+  IMPLICIT NONE
+  INCLUDE "mpif.h"
+#if defined (INT8)
+  TYPE(MatD_Int8_matrix) :: M
+#else
+  TYPE(MatD_Int_matrix) :: M
+#endif
+  INTEGER,PARAMETER :: NElm = 10*11
+  INTEGER(4) :: IErr, MyRank, NProcs
+  INTEGER :: I
+  INTEGER :: Buf(NElm)
+  INTEGER,POINTER :: Ptr(:)
 
-  type(matd_int_matrix) :: m
-  integer,parameter :: nelm = 10*11
-  integer(4) :: ierr, myrank, nprocs
-  integer :: i
-  integer :: buf(nelm)
-  integer, pointer :: ptr(:)
-
-  call mpi_init(ierr)
-  call mpi_comm_rank(mpi_comm_world, myrank, ierr)
-  call mpi_comm_size(mpi_comm_world, nprocs, ierr)
-  if (nprocs /= 6) then
-    if (myrank == 0) write(6,'(a)') " NProcs must be 6 in this program. Program stop."
-    call mpi_finalize(ierr)
-    stop
-  endif
+  CALL MPI_Init(IErr)
+  CALL MPI_Comm_rank(MPI_COMM_WORLD,MyRank,IErr)
+  CALL MPI_Comm_size(MPI_COMM_WORLD,NProcs,IErr)
+  IF (NProcs /= 6) THEN
+    IF (MyRank == 0) WRITE(6,'(A)') " NProcs must be 6 in this program. Program stop."
+    CALL MPI_Finalize(Ierr)
+    STOP
+  ENDIF
 
 !!  1. Create 10x11 block distribution matrix, whose block size is 5x4.
 !!  * NProcs must be 6.
-  call matd_create_reg(m, 10, 11, 5, 4, mpi_comm_world)
+  CALL MatD_Create_reg(M,10,11,5,4,MPI_COMM_WORLD)
 
 !!  Fence required
-  call matd_fence(m)
+  CALL MatD_Fence(M)
 
 !!  Generate data to put distributed matrix only on rank 0.
-  buf(1:nelm) = 0
-  if (myrank == 0) then
-    do i = 1, nelm
-      buf(i) = i
-    enddo
+  Buf(1:NElm) = 0
+  IF (MyRank == 0) then
+    DO I = 1, NElm
+      Buf(I) = I
+    ENDDO
 !!  The size of distributed matrix is 10x11.
-    call matd_put(m, 1, 10, 1, 11, buf)
-  endif
+    CALL Matd_Put(M,1,10,1,11,Buf)
+  ENDIF
 !!  Mapping the data in m to ptr.
-  call matd_data(m, ptr)
+  CALL MatD_Data(M,Ptr)
 
 !!  Fence required to wait for put operation.
-  call matd_fence(m)
+  CALL MatD_Fence(M)
 
 !!  Print out the elements on each rank.
-  do i = 0, 5
-    if (myrank == i) then
-      print *, "== Rank ", i
-      print *, ptr
-    endif
-    call matd_fence(m)
-  enddo
+  DO I = 0, 5
+    IF (MyRank == I) THEN
+      WRITE(6,'(A,I5)') " == Rank ", I
+      WRITE(6,'(10I5)') Ptr
+    ENDIF
+    CALL MatD_Fence(M)
+  ENDDO
 
 !!  Destroy the matrix
-  call matd_destroy(m)
-
-  call mpi_finalize(ierr)
-end program main
+  CALL MatD_Destroy(M)
+  CALL MPI_Finalize(IErr)
+END PROGRAM MAIN
