@@ -5,6 +5,11 @@ if [ `uname` = 'Darwin' ]; then
   cdir=`pwd`
   fflags="-O2"
   libs=" "
+elif [ `uname` = 'Linux' ]; then
+  f77="mpiifort"
+  cdir=`pwd`
+  fflags="-O2"
+  libs="-mkl"
 fi
 
 cat <<EOF > Makefile.config
