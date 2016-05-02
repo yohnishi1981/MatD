@@ -32,13 +32,13 @@ elif [ `uname` = 'Linux' ]; then
   f77="mpiifort"
   cdir=`pwd`
   if [ $int == "int8" ]; then
-    fflags="-O2 -i8"
+    fflags="-O2 -i8 -openmp -mkl=parallel"
     dpp="-DINT8"
-    libs="-mkl=cluster"
+    libs="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_ilp64 -lmkl_blacs_intelmpi_ilp64 -lpthread -lm -ldl"
   else
-    fflags="-O2 -i4"
+    fflags="-O2 -i4 -openmp -mkl=parallel"
     dpp="-DINT4"
-    libs="-mkl=cluster"
+    libs="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64 -lpthread -lm -ldl"
   fi
 fi
 
