@@ -6,7 +6,11 @@ program main
   use matd
   implicit none
   include 'mpif.h'
+#if defined (INT8)
+  type(matd_int8_matrix) :: m
+#else
   type(matd_int_matrix) :: m
+#endif
   integer :: ierr, i, myrank
   integer :: buf(110)
   integer, pointer :: ptr(:)

@@ -22,22 +22,24 @@ if [ `uname` = 'Darwin' ]; then
   if [ $int == "int8" ]; then
     fflags="-O2 -i8"
     dpp="-DINT8"
+    libs="-mkl -L/opt/scalapack -lscalapack64"
   else
     fflags="-O2 -i4"
     dpp="-DINT4"
+    libs="-mkl -L/opt/scalapack -lscalapack32"
   fi
-  libs=" "
 elif [ `uname` = 'Linux' ]; then
   f77="mpiifort"
   cdir=`pwd`
   if [ $int == "int8" ]; then
     fflags="-O2 -i8"
     dpp="-DINT8"
+    libs="-mkl=cluster"
   else
     fflags="-O2 -i4"
     dpp="-DINT4"
+    libs="-mkl=cluster"
   fi
-  libs="-mkl"
 fi
 
 cat <<EOF > Makefile.config
