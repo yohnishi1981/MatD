@@ -1,52 +1,68 @@
-! ブロックサイズが2x2でプロセッサグリッドが2x3の
-! 10x11のScaLAPACK型ブロックサイクリック分散行列
-! を生成し、1から110までの数値を順番に代入し、
-! 各プロセスが保持している要素を出力して確認するプログラム
-program main
-!  use mpi
-  use matd
-  implicit none
-  include 'mpif.h'
-  type(matd_int_matrix) :: m
-  integer :: ierr, i, myrank
-  integer :: buf(110)
-  integer, pointer :: ptr(:)
+PROGRAM MAIN
+!!
+!!  1. Make a ScaLAPACK-type distribution whose size is 10 x 11
+!!     with the 2x2 block size.
+!!  2. Insert from 1 to 110 into 1-D Buf array.
+!!  3. Output the data on each rank.
+!!
+  USE MatD
+  IMPLICIT NONE
+  INCLUDE 'mpif.h'
+#if defined (INT8)
+  TYPE(MatD_Int8_matrix) :: M
+#else
+  TYPE(MatD_Int_matrix) :: M
+#endif
+  INTEGER(4) :: IErr, MyRank, NProcs
+  INTEGER :: I,K,Buf(110)
+  INTEGER,POINTER :: Ptr(:)
 
-  call mpi_init(ierr)
-  call mpi_comm_rank(mpi_comm_world, myrank, ierr)
+  CALL MPI_Init(IErr)
+  CALL MPI_Comm_rank(MPI_COMM_WORLD,MyRank,IErr)
+  CALL MPI_Comm_size(MPI_COMM_WORLD,NProcs,IErr)
+  IF (NProcs /= 6) THEN
+    IF (MyRank == 0) WRITE(6,'(A)') " Error! NProcs must be 6."
+    CALL MPI_Finalize(IErr)
+    STOP
+  ENDIF
 
-  ! ブロックサイズが2x2でプロセッサグリッドが2x3の10x11の行列を生成
-  ! 末尾のオプショナル引数を.true.とする必要がある
-  call matd_create_scalapack(m, 10, 11, 2, 2, 2, 3, mpi_comm_world)
+!!  Make a matrix whose size is 10 x 11 and with Map information of Map1 and 2.
+  CALL MatD_Create_scalapack(M,10,11,2,2,2,3,MPI_COMM_WORLD)
 
-  ! フェンスを置く
-  call matd_fence(m)
+!!  Fence required
+  CALL MatD_Fence(M)
   
-  ! 分散行列へ代入するデータをランク0で生成し、
-  ! Put処理で行列全体へ代入する
-  if (myrank == 0) then
-    do i = 1, 110
-      buf(i) = i
-    enddo
-    ! 列方向で1-10、行方向で1-11の範囲に代入
-    call matd_put(m, 1, 10, 1, 11, buf)
-  endif
-  call matd_data(m, ptr)
+!!  Generate the data on rank 0 and insert by Put.
+  IF (MyRank == 0) THEN
+    DO I = 1, 110
+      Buf(I) = I
+    ENDDO
+!!  1 - 10 to column direction.  1 - 11 to row direction.
+    CALL MatD_Put(M,1,10,1,11,Buf)
+  ENDIF
+  CALL MatD_Data(M,Ptr)
   
-  ! フェンスを置いてput操作の待ち合わせ
-  call matd_fence(m)
+!!  Fence required to wait for put.
+  CALL MatD_Fence(M)
 
-  ! 各プロセスが保持している要素を出力
-  do i = 0, 5
-    if (myrank == i) then
-      print *, "== Rank ", i
-      print *, ptr
-    endif
-    call matd_fence(m)
-  enddo
+!!  Dump the data.
+  IF (MyRank == 0) THEN
+    WRITE(6,'(A)') " Global data "
+    DO I = 1, 10
+      WRITE(6,'(11I5)') (Buf(I+(K-1)*10), K = 1,11)
+    ENDDO
+  ENDIF
 
-  ! 行列の破壊処理
-  call matd_destroy(m)
+  DO I = 0, 5
+    IF (MyRank == I) THEN
+      WRITE(6,'(A,I5)') " == Rank ", I
+      WRITE(6,'(10I5)') Ptr
+    ENDIF
+    CALL MatD_Fence(M)
+  ENDDO
+
+!!  Destroy before quit
+  CALL MatD_Destroy(M)
   
-  call mpi_finalize(ierr)
-end program main
+  CALL MPI_Finalize(IErr)
+END PROGRAM MAIN

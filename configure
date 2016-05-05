@@ -20,13 +20,13 @@ if [ `uname` = 'Darwin' ]; then
   f77="mpif90"
   cdir=`pwd`
   if [ $int == "int8" ]; then
-    fflags="-O2 -i8"
+    fflags="-O2 -i8 -openmp -mkl"
     dpp="-DINT8"
-    libs="-mkl -L/opt/scalapack -lscalapack64"
+    libs="-L/opt/scalapack -lscalapack64"
   else
-    fflags="-O2 -i4"
+    fflags="-O2 -i4 -openmp -mkl"
     dpp="-DINT4"
-    libs="-mkl -L/opt/scalapack -lscalapack32"
+    libs="-L/opt/scalapack -lscalapack32"
   fi
 elif [ `uname` = 'Linux' ]; then
   f77="mpiifort"

@@ -2,7 +2,7 @@ PROGRAM MAIN
   USE matd
   IMPLICIT NONE
   INCLUDE 'mpif.h'
-  TYPE(MATD_REAL8_MATRIX) :: M1,M2
+  TYPE(MATD_REAL8_MATRIX) :: M1,M2,M3
   INTEGER,PARAMETER :: NRow = 5, NCol = 5
   INTEGER :: NBRow,NBCol
   INTEGER(4) :: MyRank4, NProcs4, IErr, ICTxt4, MyPRow4, MyPCol4, Info
@@ -24,7 +24,7 @@ PROGRAM MAIN
   NProcs = NProcs4
 
   CALL Calc_NPRC(NProcs,NPRow,NPCol)  
-  IF (MyRank == 0) WRITE(6,'(A,2I5)') " Process Grid ", NPRow, NPCol
+  IF (MyRank == 0) WRITE(6,'(A,I5,A,I5)') " Process Grid ", NPRow, ' X ', NPCol
 
   A_G(:) = 0.0D0
   B_G(:) = 0.0D0
@@ -38,9 +38,10 @@ PROGRAM MAIN
       ENDDO
     ENDDO
   ENDIF
-  
-  NBRow = 2
-  NBCol = 2
+ 
+  NBRow = INT(CEILING(DBLE(NRow)/DBLE(NPRow)))
+  NBCol = INT(CEILING(DBLE(NCol)/DBLE(NPCol)))
+ 
 ! Create Global Array M1 and distribute to A_L
   CALL MatD_Create_scalapack(M1,NRow,NCol,NBRow,NBCol,NPRow,NPCol,MPI_COMM_WORLD)
   CALL MatD_Fence(M1)
@@ -113,8 +114,9 @@ PROGRAM MAIN
       WRITE(6,'(/A,I5)') "== Rank ", I
       CALL DumpDPMat(C_L,MyNRow,MyNCol,6)
     ENDIF
+    CALL MPI_Barrier(MPI_COMM_WORLD,IErr)
   ENDDO
-  
+ 
 ! Destroy matrices
   CALL MatD_Destroy(M1)
   CALL MatD_Destroy(M2)

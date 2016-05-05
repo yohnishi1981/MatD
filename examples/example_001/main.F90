@@ -23,7 +23,7 @@ PROGRAM MAIN
   CALL MPI_Comm_size(MPI_COMM_WORLD,NProcs,IErr)
   IF (NProcs /= 6) THEN
     IF (MyRank == 0) WRITE(6,'(A)') " NProcs must be 6 in this program. Program stop."
-    CALL MPI_Finalize(Ierr)
+    CALL MPI_Finalize(IErr)
     STOP
   ENDIF
 
