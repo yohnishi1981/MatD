@@ -1,8 +1,9 @@
 examples/bin/*
-lib/*
-include/*
+lib/*.a
+include/*.mod
 src/*.mod
 src/*.a
 src/*.o
 src/matd.f90
 make.log
+Makefile.config

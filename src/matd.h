@@ -420,7 +420,7 @@ contains
 !!  Subroutine to calculate the indices of the block related to the rank in a process grid.
 !!
     TYPE(MatD_Matrix),INTENT(IN) :: Self
-    INTEGER(4),INTENT(IN) :: Rank
+    INTEGER,INTENT(IN) :: Rank
     INTEGER,INTENT(OUT) :: Block_index1, Block_index2
 
     Block_index1 = MOD(Rank,Self%ProcGrid1) + 1
@@ -472,28 +472,28 @@ contains
     return
   end subroutine matd_get_procgrid_range_
 
-  subroutine matd_get_block_number_of_rank_in_procgrid_(self, pg, r, block_number)
+  SUBROUTINE MatD_Get_block_number_of_rank_in_procgrid_(Self,PG,Rank,Block_number)
 !!
 !!  Subroutine to return the block number of the specified rank in a
 !!  specified process grid.
 !!
-    type(matd_matrix), intent(in) :: self
-    integer, intent(in) :: pg
-    INTEGER,INTENT(IN) :: r
-    integer, intent(out) :: block_number
-    integer :: block_index1_disp, block_index2_disp, blow1, bhigh1, blow2, bhigh2
+    TYPE(matd_matrix),INTENT(IN) :: Self
+    INTEGER,INTENT(IN) :: PG
+    INTEGER,INTENT(IN) :: Rank
+    INTEGER,INTENT(OUT) :: Block_Number
+    INTEGER :: block_index1_disp, block_index2_disp, blow1, bhigh1, blow2, bhigh2
 
-    call matd_get_block_index_of_rank_in_procgrid_(self, r, block_index1_disp, block_index2_disp)
-    call matd_get_procgrid_range_(self, pg, blow1, bhigh1, blow2, bhigh2)
-    if (((blow1 + block_index1_disp - 1) > self%nblocks1) .or. &
-      ((blow2 + block_index2_disp - 1) > self%nblocks2)) then
-      block_number = -1
-    else
-      call matd_get_block_number_by_block_index_(self, blow1 + block_index1_disp - 1, &
-        blow2 + block_index2_disp - 1, block_number)
-    endif
-    return
-  end subroutine matd_get_block_number_of_rank_in_procgrid_
+    CALL MatD_Get_block_index_of_rank_in_procgrid_(Self,Rank,Block_index1_disp,Block_index2_disp)
+    CALL MatD_Get_procgrid_range_(Self,PG,BLow1,BHigh1,BLow2,BHigh2)
+    IF (((BLow1 + Block_index1_disp - 1) > Self%NBlocks1) .or. &
+        ((BLow2 + Block_index2_disp - 1) > Self%NBlocks2)) then
+      Block_number = -1
+    ELSE
+      CALL MatD_Get_block_number_by_block_index_(Self,BLow1 + Block_index1_disp - 1, &
+        BLow2 + Block_index2_disp - 1,Block_number)
+    ENDIF
+    RETURN
+  END SUBROUTINE MatD_Get_block_number_of_rank_in_procgrid_
 
   subroutine matd_print_info_irreg_scalapack_(self)
 !!
@@ -1091,22 +1091,21 @@ contains
     return
   end subroutine matd_distribution_irreg_scalapack_
 
+  SUBROUTINE MatD_Distribution_(Self,Rank,Lows1,Highs1,Lows2,Highs2)
+!!
+!!  Driver subroutine of distribution
+!!
+    TYPE(matd_matrix),INTENT(IN) :: Self
+    INTEGER,INTENT(IN) :: Rank
+    INTEGER,INTENT(OUT) :: Lows1(:), Highs1(:), Lows2(:), Highs2(:)
 
-  !
-  ! ディストリビューション処理
-  !
-  subroutine matd_distribution_(self, r, lows1, highs1, lows2, highs2)
-    type(matd_matrix), intent(in) :: self
-    integer, intent(in) :: r
-    integer, intent(out) :: lows1(:), highs1(:), lows2(:), highs2(:)
-
-    if (self%is_scalapack) then
-      call matd_distribution_irreg_scalapack_(self, r, lows1, highs1, lows2, highs2)
-    else
-      call matd_distribution_irreg_blockcyclic_(self, r, lows1, highs1, lows2, highs2)
-    endif
-    return
-  end subroutine matd_distribution_
+    IF (Self%IS_Scalapack) THEN
+      CALL MatD_Distribution_irreg_scalapack_(Self,Rank,Lows1,Highs1,Lows2,Highs2)
+    ELSE
+      CALL MatD_Distribution_irreg_blockcyclic_(Self,Rank,Lows1,Highs1,Lows2,Highs2)
+    ENDIF
+    RETURN
+  END SUBROUTINE MatD_Distribution_
 
 
   !

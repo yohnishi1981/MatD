@@ -5,5 +5,5 @@ BINDIR = $(shell pwd)/bin
 subdirs:
 	for dir in $(SUBDIRS); do \
 	  cd $(shell pwd)/$$dir;\
-	  $(FC) main.F90 $(FFLAGS) $(DPPFLAGS) -o $(BINDIR)/$$dir -I$(MATD_INCLUDE) -L$(MATD_LIB) -lmatd;\
+	  $(FC) main.F90 $(FFLAGS) $(DPPFLAGS) -o $(BINDIR)/$$dir -I$(MATD_INCLUDE) $(LIBS) -L$(MATD_LIB) -lmatd;\
 	done
