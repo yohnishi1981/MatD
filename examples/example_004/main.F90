@@ -1,8 +1,11 @@
-! マップ情報が{(1,3,6,7,10),(1,3,6,10)}の
-! イレギュラーブロックサイクリック分散行列を生成し、
-! 1から110までの数値を順番代入し、各プロセスが
-! 保持している要素を出力して確認するプログラム
 PROGRAM MAIN
+!!
+!!  1. Make an irregular block cyclic distribution matrix
+!!     whose size is 10 x 11 with the map information of
+!!     (1,3,6,7,10) and (1,3,6,10).
+!!  2. Insert the data from 1 to 110.
+!!  3. Dump the data on each rank.
+!!
   USE MatD
   IMPLICIT NONE
   INCLUDE 'mpif.h'

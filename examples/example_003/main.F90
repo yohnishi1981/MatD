@@ -12,7 +12,7 @@ PROGRAM MAIN
   TYPE(MatD_Int8_matrix) :: M
 #else
   TYPE(MatD_Int_matrix) :: M
-#ENDIF
+#endif
   INTEGER(4) :: IErr, MyRank, NProcs
   INTEGER :: I,K,Buf(110)
   INTEGER,POINTER :: Ptr(:)
