@@ -1,10 +1,10 @@
-  private
+  PRIVATE
 
-  public :: matd_matrix
-  type matd_matrix
-    private
-    integer(4) :: nprocs
-    integer(4) :: myrank
+  PUBLIC :: MatD_Matrix
+  TYPE MatD_Matrix
+    PRIVATE
+    INTEGER(4) :: NProcs
+    INTEGER(4) :: MyRank
     integer :: win
     integer :: dim1
     integer :: dim2
@@ -343,35 +343,71 @@ contains
     return
   end subroutine matd_get_block_size_
 
-  subroutine matd_print_info_irreg_blockcyclic_(self)
+  SUBROUTINE MatD_Print_info_irreg_blockcyclic_(Self)
 !!
-!!  Subroutine to print the information of irregular block cyclic distribution
+!!  Subroutine to print out the information of irregular block cyclic distribution
 !!
-    type(matd_matrix), intent(in) :: self
-    integer :: i
+    TYPE(MatD_Matrix),INTENT(IN) :: Self
+    INTEGER :: I
 
-    call matd_fence_(self)
-    if (self%myrank == 3) then
-      write (*, '("(dim1=", i0, ", dim2=", i0")")') self%dim1, self%dim2
-      write (*, '("(nblocks1=", i0, ", nblocks2=", i0, ", nblocks=", i0")")') &
-        self%nblocks1, self%nblocks2, self%nblocks
-      write (*, '(a)', advance='no') "map1( "
-      do i = 1, self%nblocks1
-        write (*, '(i0, " ")', advance='no') self%map1(i)
-      end do
-      write (*, '(a)') ")"
-      write (*, '(a)', advance='no') "map2( "
-      do i = 1, self%nblocks2
-        write (*, '(i0, " ")', advance='no') self%map2(i)
-      end do
-      write (*, '(a)') ")"
-    end if
-    call matd_fence_(self)
-    write (*, '("myrank=", i0, " ,storage size=", i0)') &
-      self%myrank, size(self%storage)
-    call matd_fence_(self)
-    return
-  end subroutine matd_print_info_irreg_blockcyclic_
+    CALL MatD_Fence_(Self)
+    IF (Self%MyRank == 0) THEN
+      WRITE(6,'("=== Irregular Blockcyclic information ===")') 
+      WRITE(6, '(" Dim1=", I0, ", Dim2=", I0)') Self%Dim1, Self%Dim2
+      WRITE(6, '(" NBlocks1=", I0, ", NBlocks2=", I0, ", NBlocks=", I0)') &
+        Self%NBlocks1, Self%NBlocks2, Self%NBlocks
+      WRITE(6, '(A)', ADVANCE='NO') " Map1( "
+      DO I = 1, Self%NBlocks1
+        WRITE (6, '(I0, " ")', ADVANCE='NO') Self%Map1(I)
+      ENDDO
+      WRITE (6, '(A)') ")"
+      WRITE (6, '(A)', ADVANCE='NO') " Map2( "
+      DO I = 1, Self%NBlocks2
+        WRITE (6, '(I0, " ")', ADVANCE='NO') Self%Map2(I)
+      ENDDO
+      WRITE (6, '(A)') ")"
+    ENDIF
+    CALL MatD_Fence_(Self)
+    WRITE (6, '(" MyRank=", I0, ", Storage size=", I0)') Self%MyRank, SIZE(Self%Storage)
+    CALL MatD_Fence_(Self)
+    RETURN
+  END SUBROUTINE MatD_Print_info_irreg_blockcyclic_
+
+
+  SUBROUTINE MatD_Print_info_irreg_scalapack_(Self)
+!!
+!!  Subroutine to print out the information of irregular block cyclic distribution
+!!  with process grid
+!!
+    TYPE(MatD_Matrix),INTENT(IN) :: Self
+    INTEGER :: I
+
+    CALL MatD_Fence_(Self)
+    IF (Self%MyRank == 0) THEN
+      WRITE(6,'("=== ScaLAPACK Blockcyclic information ===")') 
+      WRITE(6,'(" Dim1=", I0, ", Dim2=", I0)') Self%Dim1, Self%Dim2
+      WRITE(6,'(" NBlocks1=", I0, ", NBlocks2=", I0, ", NBlocks=", I0 )') &
+        Self%NBlocks1, Self%NBlocks2, Self%NBlocks
+      WRITE(6,'(A)', ADVANCE='NO') " Map1( "
+      DO I = 1, Self%NBlocks1
+        WRITE(6, '(I0, " ")', ADVANCE='NO') Self%Map1(I)
+      ENDDO
+      WRITE(6,'(A)') ")"
+      WRITE(6,'(A)', ADVANCE='NO') " Map2( "
+      DO I = 1, Self%NBlocks2
+        WRITE(6,'(I0, " ")', ADVANCE='NO') Self%Map2(I)
+      ENDDO
+      WRITE(6,'(A)') ")"
+      WRITE(6,'(" ProcGrid1=", I0, ", ProcGrid2=", I0)') Self%ProcGrid1, Self%ProcGrid2
+      WRITE(6,'(" NProcGrids1=", I0, ", NProcGrids2=", I0, ", NProcGrids=", I0)') &
+        Self%NProcGrids1, Self%NProcGrids2, Self%NProcGrids
+    ENDIF
+    CALL MatD_Fence_(Self)
+    WRITE(6, '(" MyRank=", I0, ", Storage size=", I0)') Self%MyRank, SIZE(Self%Storage)
+    CALL MatD_Fence_(Self)
+    RETURN
+  END SUBROUTINE MatD_Print_info_irreg_scalapack_
+
 
   subroutine matd_fence_(self)
 !!
@@ -495,39 +531,6 @@ contains
     RETURN
   END SUBROUTINE MatD_Get_block_number_of_rank_in_procgrid_
 
-  subroutine matd_print_info_irreg_scalapack_(self)
-!!
-!!  Subroutine to print out the information of irregular block cyclic distribution
-!!  with process grid
-!!
-    type(matd_matrix), intent(in) :: self
-    integer :: i
-
-    call matd_fence_(self)
-    if (self%myrank == 3) then
-      write (*, '("(dim1=", i0, ", dim2=", i0")")') self%dim1, self%dim2
-      write (*, '("(nblocks1=", i0, ", nblocks2=", i0, ", nblocks=", i0")")') &
-        self%nblocks1, self%nblocks2, self%nblocks
-      write (*, '(a)', advance='no') "map1( "
-      do i = 1, self%nblocks1
-        write (*, '(i0, " ")', advance='no') self%map1(i)
-      end do
-      write (*, '(a)') ")"
-      write (*, '(a)', advance='no') "map2( "
-      do i = 1, self%nblocks2
-        write (*, '(i0, " ")', advance='no') self%map2(i)
-      end do
-      write (*, '(a)') ")"
-      write (*, '("procgrid1=", i0, ", procgrid2=", i0)') self%procgrid1, self%procgrid2
-      write (*, '("nprocgrids1=", i0, ", nprocgrids2=", i0, ", nprocgrids=", i0)') &
-        self%nprocgrids1, self%nprocgrids2, self%nprocgrids
-    end if
-    call matd_fence_(self)
-    write (*, '("myrank=", i0, " ,storage size=", i0)') &
-      self%myrank, size(self%storage)
-    call matd_fence_(self)
-    return
-  end subroutine matd_print_info_irreg_scalapack_
 
 
   SUBROUTINE MatD_Create_irreg_scalapack_(Self,Dim1,Dim2,Map1,Map2,ProcGrid1,ProcGrid2,COMM)
@@ -1024,19 +1027,19 @@ contains
   end subroutine matd_print_
 
 
-  !
-  ! 行列の分散状況を出力するサブルーチン
-  !
-  subroutine matd_print_info_(self)
-    type(matd_matrix), intent(in) :: self
+  SUBROUTINE MatD_Print_info_(Self)
+!!
+!!  Subroutine to print out the information of a matrix
+!!
+    TYPE(MatD_Matrix),INTENT(IN) :: Self
 
-    if (self%is_scalapack) then
-      call matd_print_info_irreg_scalapack_(self)
-    else
-      call matd_print_info_irreg_blockcyclic_(self)
-    endif
-    return
-  end subroutine matd_print_info_
+    IF (Self%IS_Scalapack) THEN
+      CALL MatD_Print_info_irreg_scalapack_(Self)
+    ELSE
+      CALL MatD_Print_info_irreg_blockcyclic_(Self)
+    ENDIF
+    RETURN
+  END SUBROUTINE MatD_Print_info_
 
 
   !

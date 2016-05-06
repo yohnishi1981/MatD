@@ -33,6 +33,8 @@ PROGRAM MAIN
 !!  This is the same as the matrix of example_004
   CALL MatD_Create_irreg(M,10,11,Map1,Map2,MPI_COMM_WORLD,.TRUE.)
   CALL MatD_Fence(M)
+  CALL MatD_Print_info(M)
+  CALL MatD_Fence(M)
 
   DO I = 0, 5
     IF (MyRank == I) THEN

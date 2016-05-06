@@ -33,7 +33,9 @@ PROGRAM MAIN
 
 !!  Fence required
   CALL MatD_Fence(M)
-
+  CALL MatD_Print_info(M)
+  CALL MatD_Fence(M)
+  
 !!  Generate data to put distributed matrix only on rank 0.
   Buf(1:NElm) = 0
   IF (MyRank == 0) then

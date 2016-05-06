@@ -1,8 +1,8 @@
 PROGRAM MAIN
-  USE matd
+  USE MatD
   IMPLICIT NONE
   INCLUDE 'mpif.h'
-  TYPE(MATD_REAL8_MATRIX) :: M1,M2,M3
+  TYPE(MatD_Real8_matrix) :: M1,M2,M3
   INTEGER,PARAMETER :: NRow = 5, NCol = 5
   INTEGER :: NBRow,NBCol
   INTEGER(4) :: MyRank4, NProcs4, IErr, ICTxt4, MyPRow4, MyPCol4, Info

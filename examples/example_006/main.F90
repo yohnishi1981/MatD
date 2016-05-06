@@ -38,6 +38,8 @@ PROGRAM MAIN
 
 !!  Output the data on rank 0 of matrix M1.
   IF (MyRank == 0) WRITE(6,'(A)') "==<< REGULAR BLOCK "
+  CALL MatD_Print_Info(M1)
+  CALL MatD_Fence(M1)
   DO I = 0, 5
     IF (MyRank == I) THEN
       WRITE(6,'(A,I5)') "== Rank ", I
@@ -56,6 +58,8 @@ PROGRAM MAIN
   CALL MatD_Data(M2,Ptr)
 !!  Output the data on rank 0 of matrix M2.
   IF (MyRank == 0) WRITE(6,'(A)') "==<< SCALAPACK BLOCKCYCLIC "
+  CALL MatD_Print_Info(M2)
+  CALL MatD_Fence(M2)
   DO I = 0, 5
     IF (MyRank == I) THEN
       WRITE(6,'(A,I5)') "== Rank ", I
