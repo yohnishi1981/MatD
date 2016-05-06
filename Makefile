@@ -16,7 +16,7 @@ cleansrc:
 
 .PHONY: cleanlib
 cleanlib:
-	rm -f $(MATD_LIB)/* $(MATD_INCLUDE)/*
+	rm -f $(MATD_LIB)/*.a $(MATD_INCLUDE)/*.mod
 
 .PHONY: cleanex
 cleanex:
