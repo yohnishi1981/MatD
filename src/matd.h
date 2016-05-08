@@ -1300,99 +1300,95 @@ contains
   end subroutine matd_get_map2_
 
 
-  ! ========================================================
-  ! GELLAN用のサブルーチン群
-  ! ========================================================
+!! ======================================================== !!
+!!                 Subroutines for Gellan                   !!
+!! ======================================================== !!
 
-  !
-  ! [GELLAN用]
-  ! イレギュラーブロックサイクリック分散行列を生成するサブルーチン
-  !
-  subroutine matd_create_irreg_blockcyclic_gellan_(&
-      self, dim1, dim2, map1, map2, comm, &
-      mem_pool, & ! X自体を渡す
-      ibegin,   & ! Xの何番目のインデックスから使うかを渡す
-      iend,     & ! どこまで使ったかを返す（使った次のインデックス）。
-      map_flag  & ! map用の領域をアロケートする（true）かそのまま使うか（false）
-      )
-    use iso_c_binding
+  SUBROUTINE MatD_Create_irreg_blockcyclic_gellan_(&
+      Self,Dim1,Dim2,Map1,Map2,Comm,MemPool,IBegin,IEnd,MapFlag)
+!!
+!!  [Gellan] Make an irregular block cyclic distributed matrix
+!!    MemPool: X in Gellan
+!!    IBegin: Usually LFMUse + 1 of CALL MemTop(LFMUse)
+!!    IEnd: The last address.
+!!    MapFlag: Memory for Map is required or not. Default = .FALSE.
+!!
+    USE ISO_C_BINDING
+    IMPLICIT NONE
+    TYPE(MatD_Matrix),INTENT(OUT) :: Self
+    INTEGER,INTENT(IN) :: Dim1, Dim2, Comm
+    INTEGER,TARGET,INTENT(IN) :: Map1(:), Map2(:)
+    DOUBLE PRECISION,TARGET,INTENT(IN) :: MemPool(:)
+    INTEGER,INTENT(IN) :: IBegin
+    INTEGER,INTENT(OUT) :: IEnd
+    LOGICAL,INTENT(IN) :: MapFlag
+    INTEGER(4) :: IErr
+    INTEGER :: ITR_B, NElems, BlockSize
+    TYPE(C_PTR) :: CPtr
+    INTEGER :: PoolIndex, SizeOfType
+    INTEGER(KIND=MPI_Address_kind) :: ByteSize
 
-    type(matd_matrix), intent(out) :: self
-    integer, intent(in) :: dim1, dim2, comm
-    integer, target, intent(in) :: map1(:), map2(:)
-    double precision, target, intent(in) :: mem_pool(:)
-    integer, intent(in) :: ibegin
-    integer, intent(out) :: iend
-    logical, intent(in) :: map_flag
+    PoolIndex = IBegin
 
-    integer :: ierr, itr_b, nelems, block_size
-    type(c_ptr) :: cptr
-    integer :: pool_index, sizeoftype
-    integer(kind=mpi_address_kind) :: bytesize
+!!  Matrix informations
+    CALL MPI_Comm_size(Comm,Self%NProcs,IErr)
+    CALL MPI_Comm_rank(Comm,Self%MyRank,IErr)
+    Self%Dim1 = Dim1
+    Self%Dim2 = Dim2
+    Self%NBlocks1 = SIZE(Map1)
+    Self%NBlocks2 = SIZE(Map2)
+    Self%NBlocks = Self%NBlocks1 * Self%NBlocks2
+    Self%Is_Scalapack = .FALSE.
 
-    pool_index = ibegin
+!!  Register the Map information
+    IF (MapFlag) THEN
+!!  When the integer is 4-byte and the number of element is odd,
+!!  the total number of elements should be added by 1.
+      CPtr = C_LOC(MemPool(PoolIndex))
+      CALL C_F_POINTER(CPtr,Self%Map1,SHAPE=[Self%NBlocks1])
+      IF (MOD(Self%NBlocks1, 2) == 0) THEN
+        PoolIndex = PoolIndex + (Self%NBlocks1 / 2)
+      ELSE
+        PoolIndex = PoolIndex + (Self%NBlocks1 / 2) + 1
+      ENDIF
 
-    call mpi_comm_size(comm, self%nprocs, ierr)
-    call mpi_comm_rank(comm, self%myrank, ierr)
-    self%dim1 = dim1
-    self%dim2 = dim2
-    self%nblocks1 = size(map1)
-    self%nblocks2 = size(map2)
-    self%nblocks = self%nblocks1 * self%nblocks2
-    self%is_scalapack = .false.
+      CPtr = C_LOC(MemPool(PoolIndex))
+      CALL C_F_POINTER(CPtr,Self%Map2,SHAPE=[Self%NBlocks2])
+      IF (mod(Self%NBlocks2, 2) == 0) then
+        PoolIndex = PoolIndex + (Self%NBlocks1 / 2)
+      ELSE
+        PoolIndex = PoolIndex + (Self%NBlocks1 / 2) + 1
+      ENDIF
 
-    ! マップ情報の登録
-    if (map_flag) then ! Xから取る場合
-      cptr = c_loc(mem_pool(pool_index))
-      call c_f_pointer(cptr, self%map1, shape=[self%nblocks1])
+      Self%Map1 = Map1
+      Self%Map2 = Map2
+    ELSE
+      Self%Map1 => Map1
+      Self%Map2 => Map2
+    ENDIF
 
-      ! integerは4バイトなので、8バイトのXの領域を取っていく際、
-      ! 要素数が奇数の場合+1しなければならない。
-      if (mod(self%nblocks1, 2) == 0) then
-        pool_index = pool_index + (self%nblocks1 / 2)
-      else
-        pool_index = pool_index + (self%nblocks1 / 2) + 1
-      endif
-
-      cptr = c_loc(mem_pool(pool_index))
-      call c_f_pointer(cptr, self%map2, shape=[self%nblocks2])
-
-      if (mod(self%nblocks2, 2) == 0) then
-        pool_index = pool_index + (self%nblocks1 / 2)
-      else
-        pool_index = pool_index + (self%nblocks1 / 2) + 1
-      endif
-
-      self%map1 = map1
-      self%map2 = map2
-
-    else
-      self%map1 => map1
-      self%map2 => map2
-    endif
-
-    nelems = 0 ; itr_b = self%myrank
-    do while (itr_b < self%nblocks)
-      call matd_get_block_size_(self, itr_b, block_size)
-      nelems = nelems + block_size
-      itr_b = itr_b + self%nprocs
-    enddo
+    NElems = 0 ; Itr_B = Self%MyRank
+    DO WHILE (Itr_B < Self%NBlocks)
+      CALL MatD_Get_block_size_(Self, Itr_B, BlockSize)
+      NElems = NElems + BlockSize
+      Itr_B = Itr_B + Self%NProcs
+    ENDDO
 
     ! 領域の割り当て
-    call mpi_type_size(MATD_MPI_TYPE, sizeoftype, ierr)
-    cptr = c_loc(mem_pool(pool_index))
-    call c_f_pointer(cptr, self%storage, shape=[nelems])
-    bytesize = sizeoftype * nelems
+    CALL mpi_type_size(MATD_MPI_TYPE, SizeOfType, ierr)
+    cptr = c_loc(MemPool(PoolIndex))
+    CALL c_f_pointer(cptr, Self%storage, shape=[NElems])
+    ByteSize = SizeOfType * NElems
 
-    if (mod(bytesize, 8) == 0) then
-      pool_index = pool_index + (bytesize / 8)
+    if (mod(ByteSize, 8) == 0) then
+      PoolIndex = PoolIndex + (ByteSize / 8)
     else
-      pool_index = pool_index + (bytesize / 8) + 1
+      PoolIndex = PoolIndex + (ByteSize / 8) + 1
     endif
 
-    call mpi_win_create(self%storage(1), bytesize, sizeoftype, &
-      mpi_info_null, comm, self%win, ierr)
-    iend = pool_index
+    CALL mpi_win_create(Self%storage(1), ByteSize, SizeOfType, &
+      mpi_info_null, comm, Self%win, ierr)
+    iend = PoolIndex
     return
   end subroutine matd_create_irreg_blockcyclic_gellan_
 
