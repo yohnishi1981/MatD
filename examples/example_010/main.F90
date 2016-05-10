@@ -2,14 +2,14 @@ PROGRAM MAIN
   USE MatD
   IMPLICIT NONE
   INCLUDE 'mpif.h'
-  TYPE(MatD_Real8_matrix) :: M
+  TYPE(MatD_Int_matrix) :: M
   INTEGER :: Map1(5) = (/1,3,6,7,10/)
   INTEGER :: Map2(4) = (/1,3,6,10/)
   INTEGER,PARAMETER :: Dim1 = 10, Dim2 = 11
   INTEGER(4) :: MyRank, NProcs, IErr
   INTEGER :: I, IBegin, IEnd
-  DOUBLE PRECISION :: Buf(110)
-  DOUBLE PRECISION,POINTER :: Ptr(:)
+  INTEGER :: Buf(110)
+  INTEGER,POINTER :: Ptr(:)
 
   DOUBLE PRECISION, ALLOCATABLE :: X(:)   !! Kind of memory pool in Gellan.
   ALLOCATE(X(10000))
@@ -33,8 +33,8 @@ PROGRAM MAIN
   CALL MatD_Fence(M)
 
 !!  Print out the memory space on each rank.
-!!  ex.) Rank 0 owns 23 double precision numbers and thus 
-!!  the index advances by 23.
+!!  ex.) Rank 0 owns 23 integer(4) numbers and thus 
+!!  the index advances by 23/2 + 1 = 12.
 !!  Also, the memory for the map information 
 !!  is added (9/2 + 1 = 5) because the map information is 4-byte
 !!  integer.
@@ -48,7 +48,7 @@ PROGRAM MAIN
 
   IF (MyRank == 0) THEN
     DO I = 1, 110
-      Buf(I) = DBLE(I)
+      Buf(I) = I
     ENDDO
     CALL MatD_Put(M,1,10,1,11,Buf)
   ENDIF
@@ -59,7 +59,7 @@ PROGRAM MAIN
   DO I = 0, 5
     IF (MyRank == I) THEN
       WRITE(6,'(A,I5,A,I5)')  "== Rank ==", I, ", NElems =", SIZE(Ptr)
-      WRITE(6, '(10F6.1)') Ptr
+      WRITE(6, '(10I5)') Ptr
     endif
     CALL MatD_Fence(M)
   enddo

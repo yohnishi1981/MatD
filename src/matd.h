@@ -78,10 +78,10 @@
     module procedure matd_locate_
   end interface matd_locate
 
-  public :: matd_data
-  interface matd_data
-    module procedure matd_data_
-  end interface matd_data
+  PUBLIC :: MatD_Data
+  INTERFACE MatD_Data
+    MODULE PROCEDURE MatD_Data_
+  END INTERFACE MatD_Data
 
   public :: matd_distribution
   interface matd_distribution
@@ -1042,16 +1042,16 @@ contains
   END SUBROUTINE MatD_Print_info_
 
 
-  !
-  ! ストレージ領域のアドレスを返すサブルーチン
-  !
-  subroutine matd_data_(self, ptr)
-    type(matd_matrix), intent(in) :: self
-    MATD_ELEMTYPE, pointer :: ptr(:)
+  SUBROUTINE MatD_Data_(Self, Ptr)
+!!
+!!  Subroutine to return the address of Self%Storage
+!!
+    TYPE(MatD_Matrix),INTENT(IN) :: Self
+    MATD_ELEMTYPE,POINTER :: Ptr(:)
 
-    ptr => self%storage
-    return
-  end subroutine matd_data_
+    Ptr => Self%Storage
+    RETURN
+  END SUBROUTINE MatD_Data_
 
 
   !
@@ -1367,30 +1367,31 @@ contains
       Self%Map2 => Map2
     ENDIF
 
-    NElems = 0 ; Itr_B = Self%MyRank
+    NElems = 0
+    Itr_B = Self%MyRank
     DO WHILE (Itr_B < Self%NBlocks)
-      CALL MatD_Get_block_size_(Self, Itr_B, BlockSize)
+      CALL MatD_Get_block_size_(Self,Itr_B,BlockSize)
       NElems = NElems + BlockSize
       Itr_B = Itr_B + Self%NProcs
     ENDDO
 
-    ! 領域の割り当て
-    CALL mpi_type_size(MATD_MPI_TYPE, SizeOfType, ierr)
-    cptr = c_loc(MemPool(PoolIndex))
-    CALL c_f_pointer(cptr, Self%storage, shape=[NElems])
-    ByteSize = SizeOfType * NElems
+!!  Calculate the memory space.
+    CALL MPI_Type_size(MATD_MPI_TYPE,SizeOfType,IErr)
+    CPtr = C_LOC(MemPool(PoolIndex))
+    CALL C_F_POINTER(CPtr,Self%Storage,SHAPE=[NElems])
+    ByteSize = SizeOfType*NElems
 
-    if (mod(ByteSize, 8) == 0) then
+    IF (MOD(ByteSize,8) == 0) THEN
       PoolIndex = PoolIndex + (ByteSize / 8)
-    else
+    ELSE
       PoolIndex = PoolIndex + (ByteSize / 8) + 1
-    endif
-
-    CALL mpi_win_create(Self%storage(1), ByteSize, SizeOfType, &
-      mpi_info_null, comm, Self%win, ierr)
-    iend = PoolIndex
-    return
-  end subroutine matd_create_irreg_blockcyclic_gellan_
+    ENDIF
+!!  Allocate the memory space.
+    CALL MPI_Win_create(Self%Storage(1),ByteSize,SizeOfType, &
+                        MPI_INFO_NULL,Comm,Self%Win,IErr)
+    IEnd = PoolIndex
+    RETURN
+  END SUBROUTINE MatD_Create_irreg_blockcyclic_gellan_
 
 
   !
