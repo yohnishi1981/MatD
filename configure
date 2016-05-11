@@ -29,16 +29,30 @@ if [ `uname` = 'Darwin' ]; then
     libs="-L/opt/scalapack -lscalapack32"
   fi
 elif [ `uname` = 'Linux' ]; then
-  f77="mpiifort"
-  cdir=`pwd`
-  if [ $int == "int8" ]; then
-    fflags="-O2 -i8 -openmp -mkl=parallel"
-    dpp="-DINT8"
-    libs="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_ilp64 -lmkl_blacs_intelmpi_ilp64 -lpthread -lm -ldl"
+  if [ `hostname` = 'pi' ]; then
+    f77="mpifrtpx"
+    cdir=`pwd`
+    if [ $int == "int8" ]; then
+      fflags="-O2 -Kvisimpact,openmp,cdII8 -Koptmsg=2"
+      dpp="-DINT8"
+      libs="-SSL2BLAMP -SCALAPACK -Kvisimpact,openmp"
+    else
+      fflags="-O2 -Kvisimpact,openmp -Koptmsg=2"
+      dpp="-DINT4"
+      libs="-SSL2BLAMP -SCALAPACK -Kvisimpact,openmp"
+    fi
   else
-    fflags="-O2 -i4 -openmp -mkl=parallel"
-    dpp="-DINT4"
-    libs="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64 -lpthread -lm -ldl"
+    f77="mpiifort"
+    cdir=`pwd`
+    if [ $int == "int8" ]; then
+      fflags="-O2 -i8 -openmp -mkl=parallel"
+      dpp="-DINT8"
+      libs="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_ilp64 -lmkl_blacs_intelmpi_ilp64 -lpthread -lm -ldl"
+    else
+      fflags="-O2 -i4 -openmp -mkl=parallel"
+      dpp="-DINT4"
+      libs="-L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64 -lpthread -lm -ldl"
+    fi
   fi
 fi
 
