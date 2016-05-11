@@ -33,6 +33,8 @@ PROGRAM MAIN
 
 !!  Fence required.
   CALL MatD_Fence(M)
+  CALL MatD_Print_info(M)
+  CALL MatD_Fence(M)
 
 !!  Generate the data on rank 0 and insert by Put.  
   IF (MyRank == 0) THEN

@@ -1,64 +1,69 @@
-program main
-!  use mpi
-  use matd
-  implicit none
-  include 'mpif.h'
-  type(matd_int_matrix) :: m
+PROGRAM MAIN
+  USE MatD
+  IMPLICIT NONE
+  INCLUDE 'mpif.h'
+  TYPE(MatD_Int_matrix) :: M
+  INTEGER :: Map1(5) = (/1,3,6,7,10/)
+  INTEGER :: Map2(4) = (/1,3,6,10/)
+  INTEGER,PARAMETER :: Dim1 = 10, Dim2 = 11
+  INTEGER(4) :: MyRank, NProcs, IErr
+  INTEGER :: I, IBegin, IEnd
+  INTEGER :: Buf(110)
+  INTEGER,POINTER :: Ptr(:)
 
-  integer :: map1(5) = (/1,3,6,7,10/)
-  integer :: map2(4) = (/1,3,6,10/)
-  integer, parameter :: dim1 = 10, dim2 = 11
+  DOUBLE PRECISION, ALLOCATABLE :: X(:)   !! Kind of memory pool in Gellan.
+  ALLOCATE(X(10000))
 
-  integer :: buf(110)
-  integer :: ierr, myrank, i, ibegin, iend
-  integer, pointer :: ptr(:)
+  CALL MPI_Init(IErr)
+  CALL MPI_Comm_rank(MPI_COMM_WORLD,MyRank,IErr)
+  CALL MPI_Comm_size(MPI_COMM_WORLD,NProcs,IErr)
+  IF (NProcs /= 6) THEN
+    IF (MyRank == 0) WRITE(6,'(A)') " ERROR! NProcs must be 6."
+    STOP
+  ENDIF
 
-  double precision, allocatable :: X(:) ! GELLANの領域と考える
-  allocate(X(10000)) ! メモリプールの確保
+  IBegin = 200 + 1 ! Kind of "CALL MemTop(IBegin)"
 
-  call mpi_init(ierr)
-  call mpi_comm_rank(mpi_comm_world, myrank, ierr)
+!!  Make an irregular block cyclic distribution using X.
+  CALL MatD_Create_irreg_gellan( &
+    M,Dim1,Dim2,Map1,Map2,MPI_COMM_WORLD,X,IBegin,IEnd,.TRUE.)
+  CALL MatD_Fence(M)
+!!  In Gellan, MemAdv(IEnd-IBegin) is required after Create. 
+  CALL MatD_Print_info(M)
+  CALL MatD_Fence(M)
 
-  ibegin = 200 ! index=200からX領域を使い始める
+!!  Print out the memory space on each rank.
+!!  ex.) Rank 0 owns 23 integer(4) numbers and thus 
+!!  the index advances by 23/2 + 1 = 12.
+!!  Also, the memory for the map information 
+!!  is added (9/2 + 1 = 5) because the map information is 4-byte
+!!  integer.
+!!  Finally, on rank 0, the index advances by 17.
+  DO I = 0, 5
+    IF (MyRank == I) THEN
+      WRITE(6,'(A,I5,A,I5,A)') "Rank ", I, " Memory = ", IEnd-IBegin, " Words."
+    ENDIF
+    CALL MatD_Fence(M)
+  ENDDO
 
-  ! X領域を使ってイレギュラーブロックサイクリック分散行列を生成
-  call matd_create_irreg_gellan( &
-    m, dim1, dim2, map1, map2, mpi_comm_world, X, ibegin, iend, .true. &
-  )
-  call matd_fence(m)
+  IF (MyRank == 0) THEN
+    DO I = 1, 110
+      Buf(I) = I
+    ENDDO
+    CALL MatD_Put(M,1,10,1,11,Buf)
+  ENDIF
+  CALL MatD_Data(M,Ptr)
 
-  ! 各プロセスがX領域のどの部分を利用したかを示す。
-  ! 例えばこの分散方法の場合ランク0のプロセスは
-  ! 23個の4バイト整数の要素を持つ。
-  ! したがって要素分としては23 / 2 + 1 = 12
-  ! インデックスが進む。
-  ! またマップ情報分(4バイト整数x9) 9 / 2 + 1 = 5
-  ! インデックスが進み、計17インデックスが進む。
-  do i = 0, 5
-    if (myrank == i) then
-      print *, iend - ibegin
+  CALL MatD_Fence(M)
+
+  DO I = 0, 5
+    IF (MyRank == I) THEN
+      WRITE(6,'(A,I5,A,I5)')  "== Rank ==", I, ", NElems =", SIZE(Ptr)
+      WRITE(6, '(10I5)') Ptr
     endif
-    call matd_fence(m)
+    CALL MatD_Fence(M)
   enddo
 
-  if (myrank == 0) then
-    do i = 1, 110
-      buf(i) = i
-    enddo
-    call matd_put(m, 1, 10, 1, 11, buf)
-  endif
-  call matd_data(m, ptr)
-
-  call matd_fence(m)
-
-  do i = 0, 5
-    if (myrank == i) then
-      print *, "== Rank ==", i, ", SIZE=", size(ptr)
-      print *, ptr
-    endif
-    call matd_fence(m)
-  enddo
-
-  call matd_destroy_gellan(m)
-  call mpi_finalize(ierr)
-end program main
+  CALL MatD_Destroy_gellan(M)
+  CALL MPI_Finalize(IErr)
+END PROGRAM MAIN

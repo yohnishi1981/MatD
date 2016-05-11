@@ -36,6 +36,8 @@ PROGRAM MAIN
 
 !!  Fence required
   CALL MatD_Fence(M)
+  CALL MatD_Print_info(M)
+  CALL MatD_Fence(M)
 
 !!  Generate the data on rank 0 and insert by Put.
   IF (MyRank == 0) THEN
@@ -56,8 +58,6 @@ PROGRAM MAIN
     DO I = 1, 10
       WRITE(6,'(11I5)') (Buf(I+(K-1)*10), K = 1,11)
     ENDDO
-    WRITE(6,'(A,10I5)') " Map1 ", Map1
-    WRITE(6,'(A,10I5)') " Map2 ", Map2
   ENDIF
 
   DO I = 0, 5
