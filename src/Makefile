@@ -9,8 +9,8 @@ matd.o : matd.f90
 	$(FC) matd.f90 -c $(FFLAGS)
 
 # Preprocess
-matd.f90 : matd_.f90 matd.h
-	$(FC) matd_.f90 -P -o $@
+matd.f90 : matd_.F90 matd.h
+	$(FC) matd_.F90 -P -o $@
 
 install : libmatd.a
 	cp libmatd.a $(MATD_LIB)
